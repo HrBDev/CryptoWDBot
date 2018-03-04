@@ -25,7 +25,27 @@ def btcp(bot, job):
     # converting string to int after removing $ and . from it
     price = int(btc.string.replace('$', '').replace('.', '')) / 100
     pricelist.append(price)
-    alert = 'BTC price fluctuation detected.\nPrice 30 minutes ago: ${}\nPrice now: ${}\nLast updated: {}'.format(
+    alert = 'BTC price fluctuation detected.\nLast price: ${}\nPrice now: ${}\nLast updated: {}'.format(
+        pricelist[-2], pricelist[-1], date)
+    if pricelist[-2] - pricelist[-1] >= 2:
+        bot.sendMessage(job.context, text=alert)
+    elif pricelist[-1] - pricelist[-2] > 2:
+        bot.sendMessage(job.context, text=alert)
+
+
+def ethp(bot, job):
+    '''Checks bitcoin price and stores it in a list.'''
+    # Downloads the page
+    page = requests.get('https://coinmarketcap.com/')
+    date = datetime.now(timezone.utc).strftime("%Y %m %d %H:%M:%S UTC")
+    # soup object
+    soup = BeautifulSoup(page.content, 'html5lib')
+    # finds btc price from soup object
+    btc = soup.find('a', {'href': '/currencies/ethereum/#markets'})
+    # converting string to int after removing $ and . from it
+    price = int(btc.string.replace('$', '').replace('.', '')) / 100
+    pricelist.append(price)
+    alert = 'ETH price fluctuation detected.\nLast price: ${}\nPrice now: ${}\nLast updated: {}'.format(
         pricelist[-2], pricelist[-1], date)
     if pricelist[-2] - pricelist[-1] >= 2:
         bot.sendMessage(job.context, text=alert)
@@ -38,21 +58,30 @@ def watchbtc(bot, update, args, job_queue, chat_data):
     chat_id = update.message.chat_id
     try:
         # args[0] should contain the time for the timer in seconds
-        due = int(args[0])
+        due = int(args[1])
         if due < 0:
             bot.sendMessage(
                 chat_id=chat_id, text='Sorry we can not go back to future!')
             return
 
+        coin: str = args[0]
+        if coin not in coin_list:
+            bot.sendMessage(
+                chat_id=chat_id, text='Sorry coin not supported!')
+            return
+
         # Add job to queue
         # job = Job(btcp, interval=due, repeat=True, context=chat_id)
-        job = job_queue.run_repeating(btcp, interval=due, context=chat_id)
+        if coin.lower() == "eth":
+            job = job_queue.run_repeating(ethp, interval=due, context=chat_id)
+        elif coin.lower() == "btc":
+            job = job_queue.run_repeating(btcp, interval=due, context=chat_id)
         chat_data['job'] = job
 
         bot.sendMessage(chat_id, 'Timer successfully set!')
 
     except (IndexError, ValueError):
-        bot.sendMessage(chat_id, 'Usage: /watchbtc <seconds>')
+        bot.sendMessage(chat_id, 'Usage: /watch <Coin> <Seconds>')
 
 
 def main():
@@ -68,15 +97,16 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('help', description))
     updater.dispatcher.add_handler(
         CommandHandler(
-            'watchbtc',
+            'watch',
             watchbtc,
             pass_args=True,
             pass_job_queue=True,
             pass_chat_data=True))
 
-    global pricelist
+    global pricelist, coin_list
     # 0s are dummy values
     pricelist = [0, 0]
+    coin_list = ["BTC", "ETH"]
 
     updater.start_polling()
     updater.idle()
