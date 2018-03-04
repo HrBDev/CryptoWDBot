@@ -2,8 +2,9 @@ import logging
 from datetime import datetime, timezone
 
 import requests
+import secret
 from bs4 import BeautifulSoup
-from telegram.ext import CommandHandler, Job, Updater
+from telegram.ext import CommandHandler, Updater
 
 
 def description(bot, update):
@@ -44,9 +45,9 @@ def watchbtc(bot, update, args, job_queue, chat_data):
             return
 
         # Add job to queue
-        job = Job(btcp, due, repeat=True, context=chat_id)
+        # job = Job(btcp, interval=due, repeat=True, context=chat_id)
+        job = job_queue.run_repeating(btcp, interval=due, context=chat_id)
         chat_data['job'] = job
-        job_queue.put(job)
 
         bot.sendMessage(chat_id, 'Timer successfully set!')
 
@@ -61,7 +62,7 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO)
 
-    token = 'TOKEN'
+    token = secret.token
     updater = Updater(token)
 
     updater.dispatcher.add_handler(CommandHandler('help', description))
