@@ -10,4 +10,5 @@ $ python CryptoWatchdogBot.py
 ```
 # Commands
 watch :`/watch <Coin> <Seconds>` Example: `/watch ETC 7200`
+
 help : shows description
