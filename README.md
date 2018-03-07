@@ -9,5 +9,5 @@ $ cd CryptoWDBot
 $ python CryptoWatchdogBot.py
 ```
 # Commands
-`/watch <Coin> <Seconds>` Example: `/watch ETC 7200`
-`/help` shows description
+watch :`/watch <Coin> <Seconds>` Example: `/watch ETC 7200`
+help : shows description
