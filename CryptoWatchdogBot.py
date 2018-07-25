@@ -64,7 +64,7 @@ def watchbtc(bot, update, args, job_queue, chat_data):
                 chat_id=chat_id, text='Sorry we can not go back to future!')
             return
 
-        coin: str = args[0]
+        coin = args[0]
         if coin not in coin_list:
             bot.sendMessage(
                 chat_id=chat_id, text='Sorry coin not supported!')
